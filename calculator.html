@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Calculator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .calculator {
+            background-color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .screen {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-align: right;
+            font-size: 20px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .expression {
+            margin-bottom: 5px;
+            min-height: 24px;
+        }
+
+        .answer {
+            font-size: 16px;
+            color: #666;
+            min-height: 20px;
+        }
+
+        .brand-name {
+            color: white;
+            text-align: center;
+            margin: 10px 0 20px 0;
+            font-size: 18px;
+            font-family: Arial, sans-serif;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 15px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #444;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #666;
+        }
+
+        .clear {
+            background-color: #ff4444;
+        }
+
+        .clear:hover {
+            background-color: #f19898;
+        }
+
+        .enter {
+            background-color: #4CAF50;
+        }
+
+        .enter:hover {
+            background-color: #6cba70;
+        }
+
+        .operator {
+            background-color: #2196F3;
+        }
+
+        .operator:hover {
+            background-color: #42a5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="screen" id="screen">
+            <div class="expression">0</div>
+            <div class="answer"></div>
+        </div>
+        <div class="brand-name">Kingsio WD-100</div>
+        <div class="buttons">
+            <button onclick="appendNumber('9')">9</button>
+            <button onclick="appendNumber('8')">8</button>
+            <button onclick="appendNumber('7')">7</button>
+            <button class="operator" onclick="setOperation('*')">*</button>
+            
+            <button onclick="appendNumber('6')">6</button>
+            <button onclick="appendNumber('5')">5</button>
+            <button onclick="appendNumber('4')">4</button>
+            <button class="operator" onclick="setOperation('/')">/</button>
+            
+            <button onclick="appendNumber('3')">3</button>
+            <button onclick="appendNumber('2')">2</button>
+            <button onclick="appendNumber('1')">1</button>
+            <button class="clear" onclick="clearScreen()">Clear</button>
+            
+            <button onclick="appendNumber('0')">0</button>
+            <button class="operator" onclick="setOperation('+')">+</button>
+            <button class="operator" onclick="setOperation('-')">-</button>
+            <button class="enter" onclick="calculate()">Enter</button>
+        </div>
+    </div>
+
+    <script>
+        let currentNumber = '0';
+        let previousNumber = null;
+        let currentOperation = null;
+        let lastResult = null;
+        let isNewNumber = true;
+
+        const screen = document.getElementById('screen');
+
+        function updateScreen() {
+            let expressionText = currentNumber;
+            if (previousNumber !== null && currentOperation) {
+                expressionText = `${previousNumber} ${currentOperation} ${currentNumber}`;
+            }
+            
+            screen.innerHTML = `
+                <div class="expression">${expressionText}</div>
+                <div class="answer">${lastResult !== null ? 'Ans: ' + lastResult : ''}</div>
+            `;
+        }
+
+        function appendNumber(num) {
+            if (isNewNumber || currentNumber === '0') {
+                currentNumber = num;
+                isNewNumber = false;
+            } else {
+                currentNumber += num;
+            }
+            updateScreen();
+        }
+
+        function setOperation(op) {
+            if (lastResult !== null && currentNumber === '0') {
+                previousNumber = lastResult.toString();
+            } else {
+                previousNumber = currentNumber;
+            }
+            currentOperation = op;
+            isNewNumber = true;
+            currentNumber = '0';
+            updateScreen();
+        }
+
+        function clearScreen() {
+            currentNumber = '0';
+            previousNumber = null;
+            currentOperation = null;
+            lastResult = null;
+            isNewNumber = true;
+            updateScreen();
+        }
+
+        function calculate() {
+            if (!currentOperation) return;
+
+            const num1 = previousNumber === null ? 0 : parseFloat(previousNumber);
+            const num2 = parseFloat(currentNumber);
+
+            try {
+                switch (currentOperation) {
+                    case '+':
+                        lastResult = num1 + num2;
+                        break;
+                    case '-':
+                        lastResult = num1 - num2;
+                        break;
+                    case '*':
+                        lastResult = num1 * num2;
+                        break;
+                    case '/':
+                        if (num2 === 0) throw new Error('Division by zero');
+                        lastResult = num1 / num2;
+                        break;
+                }
+
+                currentNumber = '0';
+                previousNumber = null;
+                currentOperation = null;
+                isNewNumber = true;
+                updateScreen();
+            } catch (error) {
+                currentNumber = 'Error';
+                lastResult = null;
+                updateScreen();
+                setTimeout(clearScreen, 1500);
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+
+            if (/[0-9]/.test(key)) {
+                appendNumber(key);
+            } else if (['+', '-', '*', '/'].includes(key)) {
+                setOperation(key);
+            } else if (key === 'Enter') {
+                calculate();
+            } else if (key === 'Escape') {
+                clearScreen();
+            }
+        });
+    </script>
+</body>
+</html>
